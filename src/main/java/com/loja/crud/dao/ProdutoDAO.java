@@ -53,7 +53,6 @@ public class ProdutoDAO {
             System.out.println("Erro ao listar produtos: " + e.getMessage());
         }
 
-        // percorre o HashMap com Map.Entry e conta os produtos
         int contador = 0;
         for (Map.Entry<Integer, Produto> entry : memoria.entrySet()) {
             contador++;

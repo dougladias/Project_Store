@@ -6,29 +6,35 @@ import java.sql.SQLException;
 
 // Database cuida da conexao com o banco loja
 public class Database {
-    private static final String URL = "jdbc:mariadb://localhost:3306/loja";
-    private static final String USUARIO = "root";
-    private static final String SENHA = "";
+    private String url = "jdbc:mysql://localhost:3306/loja";
+    private String usuario = "root";
+    private String senha = "";
 
-    private Connection conexao = null;
+    private Connection conexao;
+
+    public Database() {
+        try {
+            this.conexao = DriverManager.getConnection(this.url, this.usuario, this.senha);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Connection getConnection() throws SQLException {
-        if (conexao == null || conexao.isClosed()) {
-            conexao = DriverManager.getConnection(URL, USUARIO, SENHA);
+        if (this.conexao == null || this.conexao.isClosed()) {
+            this.conexao = DriverManager.getConnection(this.url, this.usuario, this.senha);
         }
-        return conexao;
+        return this.conexao;
     }
 
     public void closeConnection() {
-        if (conexao != null) {
+        if (this.conexao != null) {
             try {
-                conexao.close();
-                conexao = null;
+                this.conexao.close();
+                this.conexao = null;
             } catch (SQLException e) {
                 System.err.println("Erro ao fechar a conexao: " + e.getMessage());
             }
         }
     }
 }
-
-
