@@ -1,0 +1,15 @@
+CREATE DATABASE IF NOT EXISTS loja;
+USE loja;
+
+CREATE TABLE IF NOT EXISTS usuario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    cpf CHAR(11) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL,
+    telefone VARCHAR(11) NOT NULL,
+    data_nascimento DATE NOT NULL,
+    rua VARCHAR(150) NOT NULL,
+    bairro VARCHAR(100) NOT NULL,
+    numero VARCHAR(10) NOT NULL,
+    cep CHAR(8) NOT NULL
+);
