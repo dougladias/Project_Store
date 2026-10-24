@@ -1,8 +1,10 @@
 package com.loja.crud.view;
 
-import com.loja.crud.model.Produto;
+import com.loja.crud.exception.DataAccessException;
+import com.loja.crud.entity.Produto;
 import com.loja.crud.service.ProdutoService;
 
+import java.math.BigDecimal;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -23,25 +25,29 @@ public class ProdutoConsole {
             imprimirMenu();
             opcao = lerOpcao();
 
-            switch (opcao) {
-                case 1:
-                    criar();
-                    break;
-                case 2:
-                    listar();
-                    break;
-                case 3:
-                    atualizar();
-                    break;
-                case 4:
-                    deletar();
-                    break;
-                case 0:
-                    System.out.println("Voltando...");
-                    break;
-                default:
-                    System.out.println("Digite um valor valido");
-                    break;
+            try {
+                switch (opcao) {
+                    case 1:
+                        criar();
+                        break;
+                    case 2:
+                        listar();
+                        break;
+                    case 3:
+                        atualizar();
+                        break;
+                    case 4:
+                        deletar();
+                        break;
+                    case 0:
+                        System.out.println("Voltando...");
+                        break;
+                    default:
+                        System.out.println("Digite um valor valido");
+                        break;
+                }
+            } catch (DataAccessException e) {
+                System.out.println("Erro ao acessar o banco de dados.");
             }
         }
     }
@@ -52,7 +58,7 @@ public class ProdutoConsole {
         if (service.cadastrar(dados.nome, dados.preco, dados.quantidade)) {
             System.out.println("Produto cadastrado!");
         } else {
-            System.out.println("Dados invalidos.");
+            System.out.println("Nao foi possivel cadastrar o produto.");
         }
     }
 
@@ -66,7 +72,7 @@ public class ProdutoConsole {
 
         for (Produto produto : produtos) {
             System.out.println(produto.getId() + " - " + produto.getNome()
-                    + " - R$ " + produto.getPreco()
+                    + " - R$ " + String.format("%.2f", produto.getPreco())
                     + " - " + produto.getQuantidade() + " un");
         }
     }
@@ -78,19 +84,23 @@ public class ProdutoConsole {
         if (service.atualizar(id, dados.nome, dados.preco, dados.quantidade)) {
             System.out.println("Produto atualizado!");
         } else {
-            System.out.println("Dados invalidos.");
+            System.out.println("Nao foi possivel atualizar o produto.");
         }
     }
 
     private void deletar() {
         int id = lerId();
-        service.deletar(id);
-        System.out.println("Produto deletado!");
+
+        if (service.deletar(id)) {
+            System.out.println("Produto deletado!");
+        } else {
+            System.out.println("Nao foi possivel deletar o produto.");
+        }
     }
 
     private DadosProduto lerDadosProduto() {
         String nome = lerNome();
-        double preco = lerPreco();
+        BigDecimal preco = lerPreco();
         int quantidade = lerQuantidade();
 
         return new DadosProduto(nome, preco, quantidade);
@@ -109,11 +119,11 @@ public class ProdutoConsole {
         }
     }
 
-    private double lerPreco() {
+    private BigDecimal lerPreco() {
         while (true) {
-            double preco = lerDecimal("Defina o preco:");
+            BigDecimal preco = lerDecimal("Defina o preco:");
 
-            if (Double.isFinite(preco) && preco > 0) {
+            if (preco.compareTo(BigDecimal.ZERO) > 0) {
                 return preco;
             }
 
@@ -133,12 +143,12 @@ public class ProdutoConsole {
         }
     }
 
-    private double lerDecimal(String mensagem) {
+    private BigDecimal lerDecimal(String mensagem) {
         while (true) {
             System.out.println(mensagem);
 
             try {
-                return Double.parseDouble(scanner.nextLine().replace(",", "."));
+                return new BigDecimal(scanner.nextLine().trim().replace(",", "."));
             } catch (NumberFormatException e) {
                 System.out.println("Valor invalido. Tente novamente.");
             }
@@ -193,10 +203,10 @@ public class ProdutoConsole {
     private static class DadosProduto {
 
         private final String nome;
-        private final double preco;
+        private final BigDecimal preco;
         private final int quantidade;
 
-        private DadosProduto(String nome, double preco, int quantidade) {
+        private DadosProduto(String nome, BigDecimal preco, int quantidade) {
             this.nome = nome;
             this.preco = preco;
             this.quantidade = quantidade;

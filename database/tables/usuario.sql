@@ -1,4 +1,3 @@
-CREATE DATABASE IF NOT EXISTS loja;
 USE loja;
 
 CREATE TABLE IF NOT EXISTS usuario (
@@ -7,9 +6,5 @@ CREATE TABLE IF NOT EXISTS usuario (
     cpf CHAR(11) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL,
     telefone VARCHAR(11) NOT NULL,
-    data_nascimento DATE NOT NULL,
-    rua VARCHAR(150) NOT NULL,
-    bairro VARCHAR(100) NOT NULL,
-    numero VARCHAR(10) NOT NULL,
-    cep CHAR(8) NOT NULL
-);
+    data_nascimento DATE NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

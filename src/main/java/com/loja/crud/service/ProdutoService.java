@@ -1,47 +1,62 @@
 package com.loja.crud.service;
 
-import com.loja.crud.dao.ProdutoDAO;
-import com.loja.crud.model.Produto;
+import com.loja.crud.tables.ProdutoTable;
+import com.loja.crud.exception.DataAccessException;
+import com.loja.crud.entity.Produto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-// Regras do produto, valida os dados antes de mandar pro DAO
 public class ProdutoService {
 
-    private ProdutoDAO dao = new ProdutoDAO();
+    private final ProdutoTable produtoTable = new ProdutoTable();
 
-    public boolean cadastrar(String nome, double preco, int quantidade) {
-        if (nome.trim().isEmpty() || preco <= 0 || quantidade < 0) {
+    public boolean cadastrar(String nome, BigDecimal preco, int quantidade) {
+        if (nome == null || preco == null || quantidade < 0) {
             return false;
         }
 
-        Produto produto = new Produto();
-        produto.setNome(nome);
-        produto.setPreco(preco);
-        produto.setQuantidade(quantidade);
-        dao.inserir(produto);
-        return true;
+        try {
+            Produto produto = new Produto();
+            produto.setNome(nome);
+            produto.setPreco(preco);
+            produto.setQuantidade(quantidade);
+            return produtoTable.inserir(produto);
+        } catch (IllegalArgumentException | DataAccessException e) {
+            return false;
+        }
     }
 
     public List<Produto> listar() {
-        return dao.listar();
+        return produtoTable.listar();
     }
 
-    public boolean atualizar(int id, String nome, double preco, int quantidade) {
-        if (nome.trim().isEmpty() || preco <= 0 || quantidade < 0) {
+    public boolean atualizar(int id, String nome, BigDecimal preco, int quantidade) {
+        if (id <= 0 || nome == null || preco == null || quantidade < 0) {
             return false;
         }
 
-        Produto produto = new Produto();
-        produto.setId(id);
-        produto.setNome(nome);
-        produto.setPreco(preco);
-        produto.setQuantidade(quantidade);
-        dao.atualizar(produto);
-        return true;
+        try {
+            Produto produto = new Produto();
+            produto.setId(id);
+            produto.setNome(nome);
+            produto.setPreco(preco);
+            produto.setQuantidade(quantidade);
+            return produtoTable.atualizar(produto);
+        } catch (IllegalArgumentException | DataAccessException e) {
+            return false;
+        }
     }
 
-    public void deletar(int id) {
-        dao.deletar(id);
+    public boolean deletar(int id) {
+        if (id <= 0) {
+            return false;
+        }
+
+        try {
+            return produtoTable.deletar(id);
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 }

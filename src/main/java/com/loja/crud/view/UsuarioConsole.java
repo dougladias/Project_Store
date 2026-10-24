@@ -1,10 +1,11 @@
 package com.loja.crud.view;
 
-import com.loja.crud.model.Usuario;
-import com.loja.crud.model.vo.Cpf;
-import com.loja.crud.model.vo.Email;
-import com.loja.crud.model.vo.Endereco;
-import com.loja.crud.model.vo.Telefone;
+import com.loja.crud.exception.DataAccessException;
+import com.loja.crud.entity.Usuario;
+import com.loja.crud.entity.Usuario.Cpf;
+import com.loja.crud.entity.Usuario.Email;
+import com.loja.crud.entity.Usuario.Endereco;
+import com.loja.crud.entity.Usuario.Telefone;
 import com.loja.crud.service.UsuarioService;
 
 import java.time.LocalDate;
@@ -35,25 +36,29 @@ public class UsuarioConsole {
             imprimirMenu();
             opcao = lerOpcao();
 
-            switch (opcao) {
-                case 1:
-                    criar();
-                    break;
-                case 2:
-                    listar();
-                    break;
-                case 3:
-                    atualizar();
-                    break;
-                case 4:
-                    deletar();
-                    break;
-                case 0:
-                    System.out.println("Voltando...");
-                    break;
-                default:
-                    System.out.println("Digite um valor valido");
-                    break;
+            try {
+                switch (opcao) {
+                    case 1:
+                        criar();
+                        break;
+                    case 2:
+                        listar();
+                        break;
+                    case 3:
+                        atualizar();
+                        break;
+                    case 4:
+                        deletar();
+                        break;
+                    case 0:
+                        System.out.println("Voltando...");
+                        break;
+                    default:
+                        System.out.println("Digite um valor valido");
+                        break;
+                }
+            } catch (DataAccessException e) {
+                System.out.println("Erro ao acessar o banco de dados.");
             }
         }
     }
@@ -88,7 +93,7 @@ public class UsuarioConsole {
         if (service.atualizar(usuario)) {
             System.out.println("Usuario atualizado!");
         } else {
-            System.out.println("Usuario nao encontrado.");
+            System.out.println("Nao foi possivel atualizar o usuario.");
         }
     }
 
@@ -106,7 +111,7 @@ public class UsuarioConsole {
         if (service.deletar(id)) {
             System.out.println("Usuario deletado!");
         } else {
-            System.out.println("Usuario nao encontrado.");
+            System.out.println("Nao foi possivel deletar o usuario.");
         }
     }
 
