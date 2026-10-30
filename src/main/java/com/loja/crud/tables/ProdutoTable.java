@@ -1,6 +1,6 @@
 package com.loja.crud.tables;
 
-import com.loja.crud.exception.DataAccessException;
+import com.loja.crud.exception.ProdutoException;
 import com.loja.crud.database.Database;
 import com.loja.crud.mapper.ProdutoMapper;
 import com.loja.crud.entity.Produto;
@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,16 +18,23 @@ public class ProdutoTable {
     private final Database database = new Database();
     private final ProdutoMapper mapper = new ProdutoMapper();
 
-    public boolean inserir(Produto produto) {
+    public int inserir(Produto produto) {
         String sql = "INSERT INTO produto (nome, preco, quantidade) VALUES (?, ?, ?)";
 
         try (Connection conexao = database.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+             PreparedStatement stmt = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             preencherParametros(stmt, produto);
-            return stmt.executeUpdate() == 1;
+
+            if (stmt.executeUpdate() != 1) {
+                return 0;
+            }
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao inserir produto", e);
+            throw new ProdutoException("Erro ao inserir produto", e);
         }
     }
 
@@ -42,14 +50,49 @@ public class ProdutoTable {
                 try {
                     produtos.add(mapper.map(rs));
                 } catch (IllegalArgumentException e) {
-                    throw new DataAccessException("Produto com dados invalidos", e);
+                    throw new ProdutoException("Produto com dados invalidos", e);
                 }
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao listar produtos", e);
+            throw new ProdutoException("Erro ao listar produtos", e);
         }
 
         return produtos;
+    }
+
+    public Produto find(int id) {
+        if (id <= 0) {
+            return null;
+        }
+
+        String sql = Database.query("produto")
+                .select("id, nome, preco, quantidade")
+                .where("id = ?")
+                .build();
+
+        try (Connection conexao = database.getConnection();
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                try {
+                    return mapper.map(rs);
+                } catch (IllegalArgumentException e) {
+                    throw new ProdutoException("Produto com dados invalidos", e);
+                }
+            }
+        } catch (SQLException e) {
+            throw new ProdutoException("Erro ao buscar produto", e);
+        }
+    }
+
+    public Produto get_id(int id) {
+        return find(id);
     }
 
     public boolean atualizar(Produto produto) {
@@ -62,7 +105,7 @@ public class ProdutoTable {
             stmt.setInt(4, produto.getId());
             return stmt.executeUpdate() == 1;
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao atualizar produto", e);
+            throw new ProdutoException("Erro ao atualizar produto", e);
         }
     }
 
@@ -75,7 +118,7 @@ public class ProdutoTable {
             stmt.setInt(1, id);
             return stmt.executeUpdate() == 1;
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao deletar produto", e);
+            throw new ProdutoException("Erro ao deletar produto", e);
         }
     }
 

@@ -1,59 +1,38 @@
 package com.loja.crud;
 
-import com.loja.crud.view.ProdutoConsole;
-import com.loja.crud.view.UsuarioConsole;
+import com.loja.crud.controller.EnderecoController;
+import com.loja.crud.controller.ProdutoController;
+import com.loja.crud.controller.UsuarioController;
+import com.sun.net.httpserver.HttpServer;
 
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
 public class Main {
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        ProdutoConsole produtoConsole = new ProdutoConsole(scanner);
-        UsuarioConsole usuarioConsole = new UsuarioConsole(scanner);
+    public static void main(String[] args) throws IOException {
+        int porta = porta();
+        HttpServer server = HttpServer.create(new InetSocketAddress(porta), 0);
 
-        int opcao = -1;
+        ProdutoController.registrar(server);
+        UsuarioController.registrar(server);
+        EnderecoController.registrar(server);
+        server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        server.start();
 
-        while (opcao != 0) {
-            imprimirMenu();
-            opcao = lerOpcao(scanner);
+        System.out.println("API disponivel em http://localhost:" + porta + "/api");
 
-            switch (opcao) {
-                case 1:
-                    produtoConsole.abrir();
-                    break;
-                case 2:
-                    usuarioConsole.abrir();
-                    break;
-                case 0:
-                    System.out.println("Saindo...");
-                    break;
-                default:
-                    System.out.println("Digite um valor valido");
-                    break;
-            }
-        }
-
-        scanner.close();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
     }
 
-    private static void imprimirMenu() {
-        System.out.println("=== SISTEMA DE LOJA ===");
-        System.out.println("1 - Gerenciar Produtos");
-        System.out.println("2 - Gerenciar Usuarios");
-        System.out.println("0 - Sair");
-    }
+    private static int porta() {
+        String valor = System.getProperty("PORT");
 
-    private static int lerOpcao(Scanner scanner) {
-        try {
-            System.out.print("Opcao: ");
-            int opcao = scanner.nextInt();
-            scanner.nextLine();
-            return opcao;
-        } catch (InputMismatchException e) {
-            scanner.nextLine();
-            return -1;
+        if (valor == null || valor.isBlank()) {
+            valor = System.getenv("PORT");
         }
+
+        return valor == null || valor.isBlank() ? 8080 : Integer.parseInt(valor);
     }
 }

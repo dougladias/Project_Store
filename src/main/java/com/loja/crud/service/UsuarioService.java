@@ -1,8 +1,7 @@
 package com.loja.crud.service;
 
-import com.loja.crud.tables.UsuarioTable;
-import com.loja.crud.exception.DataAccessException;
 import com.loja.crud.entity.Usuario;
+import com.loja.crud.tables.UsuarioTable;
 
 import java.util.List;
 
@@ -10,20 +9,29 @@ public class UsuarioService {
 
     private final UsuarioTable usuarioTable = new UsuarioTable();
 
-    public boolean cadastrar(Usuario usuario) {
+    public Usuario cadastrar(Usuario usuario) {
         if (usuario == null) {
-            return false;
+            return null;
         }
 
-        try {
-            return usuarioTable.inserir(usuario);
-        } catch (DataAccessException e) {
-            return false;
-        }
+        int id = usuarioTable.inserir(usuario);
+        return id > 0 ? usuarioTable.find(id) : null;
     }
 
     public List<Usuario> listar() {
         return usuarioTable.listar();
+    }
+
+    public Usuario buscar(int id) {
+        if (id <= 0) {
+            return null;
+        }
+
+        return usuarioTable.find(id);
+    }
+
+    public boolean existe(int id) {
+        return id > 0 && usuarioTable.existe(id);
     }
 
     public boolean atualizar(Usuario usuario) {
@@ -31,11 +39,7 @@ public class UsuarioService {
             return false;
         }
 
-        try {
-            return usuarioTable.atualizar(usuario);
-        } catch (DataAccessException e) {
-            return false;
-        }
+        return usuarioTable.atualizar(usuario);
     }
 
     public boolean deletar(int id) {
@@ -43,10 +47,6 @@ public class UsuarioService {
             return false;
         }
 
-        try {
-            return usuarioTable.deletar(id);
-        } catch (DataAccessException e) {
-            return false;
-        }
+        return usuarioTable.deletar(id);
     }
 }

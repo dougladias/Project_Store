@@ -1,5 +1,9 @@
 package com.loja.crud.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.time.LocalDate;
 import java.util.regex.Pattern;
 
@@ -17,7 +21,15 @@ public class Usuario {
         this(0, nome, cpf, email, telefone, dataNascimento, endereco);
     }
 
-    public Usuario(int id, String nome, Cpf cpf, Email email, Telefone telefone, LocalDate dataNascimento, Endereco endereco) {
+    @JsonCreator
+    public Usuario(
+            @JsonProperty("id") int id,
+            @JsonProperty("nome") String nome,
+            @JsonProperty("cpf") Cpf cpf,
+            @JsonProperty("email") Email email,
+            @JsonProperty("telefone") Telefone telefone,
+            @JsonProperty("dataNascimento") LocalDate dataNascimento,
+            @JsonProperty("endereco") Endereco endereco) {
         if (id < 0) {
             throw new IllegalArgumentException("Id invalido");
         }
@@ -68,6 +80,10 @@ public class Usuario {
         return endereco;
     }
 
+    public Usuario comId(int id) {
+        return new Usuario(id, nome, cpf, email, telefone, dataNascimento, endereco);
+    }
+
     public static class Cpf {
 
         private static final int TAMANHO = 11;
@@ -77,6 +93,7 @@ public class Usuario {
 
         private final String digitos;
 
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public Cpf(String valor) {
             if (valor == null) {
                 throw new IllegalArgumentException("CPF invalido");
@@ -102,6 +119,7 @@ public class Usuario {
                     && segundo == digitoNaPosicao(SEGUNDO_DIGITO);
         }
 
+        @JsonValue
         public String getDigitos() {
             return digitos;
         }
@@ -143,6 +161,7 @@ public class Usuario {
 
         private final String valor;
 
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public Email(String valor) {
             if (valor == null) {
                 throw new IllegalArgumentException("Email invalido");
@@ -157,6 +176,7 @@ public class Usuario {
             return FORMATO.matcher(valor).matches();
         }
 
+        @JsonValue
         public String getValor() {
             return valor;
         }
@@ -172,6 +192,7 @@ public class Usuario {
 
         private final String digitos;
 
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         public Telefone(String valor) {
             if (valor == null) {
                 throw new IllegalArgumentException("Telefone invalido");
@@ -195,53 +216,9 @@ public class Usuario {
             return digitos.substring(0, TAMANHO_DDD);
         }
 
+        @JsonValue
         public String getDigitos() {
             return digitos;
-        }
-    }
-
-    public static class Endereco {
-
-        private static final String FORMATO_CEP = "\\d{8}";
-
-        private final String rua;
-        private final String bairro;
-        private final String numero;
-        private final String cep;
-
-        public Endereco(String rua, String bairro, String numero, String cep) {
-            if (rua == null || bairro == null || numero == null || cep == null) {
-                throw new IllegalArgumentException("Endereco invalido");
-            }
-
-            this.rua = rua.trim();
-            this.bairro = bairro.trim();
-            this.numero = numero.trim();
-            this.cep = cep.replaceAll("\\D", "");
-
-            if (this.rua.isEmpty() || this.bairro.isEmpty() || this.numero.isEmpty() || !validarCEP()) {
-                throw new IllegalArgumentException("Endereco invalido");
-            }
-        }
-
-        public String getRua() {
-            return rua;
-        }
-
-        public String getBairro() {
-            return bairro;
-        }
-
-        public String getNumero() {
-            return numero;
-        }
-
-        public String getCEP() {
-            return cep;
-        }
-
-        public boolean validarCEP() {
-            return cep.matches(FORMATO_CEP);
         }
     }
 }

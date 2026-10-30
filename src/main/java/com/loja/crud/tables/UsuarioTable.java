@@ -1,10 +1,10 @@
 package com.loja.crud.tables;
 
-import com.loja.crud.exception.DataAccessException;
+import com.loja.crud.exception.UsuarioException;
 import com.loja.crud.database.Database;
 import com.loja.crud.mapper.UsuarioMapper;
 import com.loja.crud.entity.Usuario;
-import com.loja.crud.entity.Usuario.Endereco;
+import com.loja.crud.entity.Endereco;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -17,12 +17,13 @@ import java.util.List;
 
 public class UsuarioTable {
 
-    private static final String COLUNAS = "u.id, u.nome, u.cpf, u.email, u.telefone, u.data_nascimento, e.rua, e.bairro, e.numero, e.cep";
+    private static final String COLUNAS = "u.id, u.nome, u.cpf, u.email, u.telefone, u.data_nascimento, "
+            + "e.id AS endereco_id, e.usuario_id AS endereco_usuario_id, e.rua, e.bairro, e.numero, e.cep";
 
     private final Database database = new Database();
     private final UsuarioMapper mapper = new UsuarioMapper();
 
-    public boolean inserir(Usuario usuario) {
+    public int inserir(Usuario usuario) {
         String sqlEndereco = "INSERT INTO endereco (rua, bairro, numero, cep, usuario_id) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conexao = database.getConnection()) {
@@ -32,7 +33,7 @@ public class UsuarioTable {
                 int usuarioId = inserirUsuario(conexao, usuario);
                 if (usuarioId <= 0) {
                     conexao.rollback();
-                    return false;
+                    return 0;
                 }
 
                 try (PreparedStatement stmt = conexao.prepareStatement(sqlEndereco)) {
@@ -41,18 +42,19 @@ public class UsuarioTable {
 
                     if (stmt.executeUpdate() != 1) {
                         conexao.rollback();
-                        return false;
+                        return 0;
                     }
                 }
 
                 conexao.commit();
-                return true;
+                return usuarioId;
             } catch (SQLException e) {
                 conexao.rollback();
                 throw e;
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao inserir usuario", e);
+            boolean ehConflito = ehConflito(e);
+            throw new UsuarioException(ehConflito ? "CPF ja cadastrado" : "Erro ao inserir usuario", e, ehConflito);
         }
     }
 
@@ -68,14 +70,70 @@ public class UsuarioTable {
                 try {
                     usuarios.add(mapper.map(rs));
                 } catch (IllegalArgumentException e) {
-                    throw new DataAccessException("Usuario com dados invalidos", e);
+                    throw new UsuarioException("Usuario com dados invalidos", e);
                 }
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao listar usuarios", e);
+            throw new UsuarioException("Erro ao listar usuarios", e);
         }
 
         return usuarios;
+    }
+
+    public Usuario find(int id) {
+        if (id <= 0) {
+            return null;
+        }
+
+        String sql = Database.query("usuario u")
+                .select(COLUNAS)
+                .innerJoin("endereco e", "e.usuario_id = u.id")
+                .where("u.id = ?")
+                .build();
+
+        try (Connection conexao = database.getConnection();
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                try {
+                    return mapper.map(rs);
+                } catch (IllegalArgumentException e) {
+                    throw new UsuarioException("Usuario com dados invalidos", e);
+                }
+            }
+        } catch (SQLException e) {
+            throw new UsuarioException("Erro ao buscar usuario", e);
+        }
+    }
+
+    public Usuario get_id(int id) {
+        return find(id);
+    }
+
+    public boolean existe(int id) {
+        if (id <= 0) {
+            return false;
+        }
+
+        String sql = "SELECT 1 FROM usuario WHERE id = ?";
+
+        try (Connection conexao = database.getConnection();
+             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new UsuarioException("Erro ao verificar usuario", e);
+        }
     }
 
     public boolean atualizar(Usuario usuario) {
@@ -113,7 +171,8 @@ public class UsuarioTable {
                 throw e;
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao atualizar usuario", e);
+            boolean ehConflito = ehConflito(e);
+            throw new UsuarioException(ehConflito ? "CPF ja cadastrado" : "Erro ao atualizar usuario", e, ehConflito);
         }
     }
 
@@ -126,8 +185,12 @@ public class UsuarioTable {
             stmt.setInt(1, id);
             return stmt.executeUpdate() == 1;
         } catch (SQLException e) {
-            throw new DataAccessException("Erro ao deletar usuario", e);
+            throw new UsuarioException("Erro ao deletar usuario", e);
         }
+    }
+
+    private boolean ehConflito(SQLException e) {
+        return "23000".equals(e.getSQLState()) || e.getErrorCode() == 1062;
     }
 
     private int inserirUsuario(Connection conexao, Usuario usuario) throws SQLException {

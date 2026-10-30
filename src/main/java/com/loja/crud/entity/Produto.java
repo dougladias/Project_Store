@@ -1,5 +1,8 @@
 package com.loja.crud.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 
 public class Produto {
@@ -12,7 +15,12 @@ public class Produto {
     public Produto() {
     }
 
-    public Produto(int id, String nome, BigDecimal preco, int quantidade) {
+    @JsonCreator
+    public Produto(
+            @JsonProperty("id") int id,
+            @JsonProperty("nome") String nome,
+            @JsonProperty("preco") BigDecimal preco,
+            @JsonProperty("quantidade") int quantidade) {
         setId(id);
         setNome(nome);
         setPreco(preco);

@@ -1,51 +1,41 @@
 package com.loja.crud.service;
 
-import com.loja.crud.tables.ProdutoTable;
-import com.loja.crud.exception.DataAccessException;
 import com.loja.crud.entity.Produto;
+import com.loja.crud.tables.ProdutoTable;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class ProdutoService {
 
     private final ProdutoTable produtoTable = new ProdutoTable();
 
-    public boolean cadastrar(String nome, BigDecimal preco, int quantidade) {
-        if (nome == null || preco == null || quantidade < 0) {
-            return false;
+    public Produto cadastrar(Produto produto) {
+        if (produto == null) {
+            return null;
         }
 
-        try {
-            Produto produto = new Produto();
-            produto.setNome(nome);
-            produto.setPreco(preco);
-            produto.setQuantidade(quantidade);
-            return produtoTable.inserir(produto);
-        } catch (IllegalArgumentException | DataAccessException e) {
-            return false;
-        }
+        int id = produtoTable.inserir(produto);
+        return id > 0 ? produtoTable.find(id) : null;
     }
 
     public List<Produto> listar() {
         return produtoTable.listar();
     }
 
-    public boolean atualizar(int id, String nome, BigDecimal preco, int quantidade) {
-        if (id <= 0 || nome == null || preco == null || quantidade < 0) {
+    public Produto buscar(int id) {
+        if (id <= 0) {
+            return null;
+        }
+
+        return produtoTable.find(id);
+    }
+
+    public boolean atualizar(Produto produto) {
+        if (produto == null || produto.getId() <= 0) {
             return false;
         }
 
-        try {
-            Produto produto = new Produto();
-            produto.setId(id);
-            produto.setNome(nome);
-            produto.setPreco(preco);
-            produto.setQuantidade(quantidade);
-            return produtoTable.atualizar(produto);
-        } catch (IllegalArgumentException | DataAccessException e) {
-            return false;
-        }
+        return produtoTable.atualizar(produto);
     }
 
     public boolean deletar(int id) {
@@ -53,10 +43,6 @@ public class ProdutoService {
             return false;
         }
 
-        try {
-            return produtoTable.deletar(id);
-        } catch (DataAccessException e) {
-            return false;
-        }
+        return produtoTable.deletar(id);
     }
 }
