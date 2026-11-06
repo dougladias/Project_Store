@@ -1,8 +1,10 @@
 package com.loja.crud;
 
-import com.loja.crud.controller.EnderecoController;
-import com.loja.crud.controller.ProdutoController;
-import com.loja.crud.controller.UsuarioController;
+import com.loja.crud.modulos.compra.controller.CompraController;
+import com.loja.crud.modulos.produto.controller.ProdutoController;
+import com.loja.crud.modulos.usuario.controller.CepController;
+import com.loja.crud.modulos.usuario.controller.EnderecoController;
+import com.loja.crud.modulos.usuario.controller.UsuarioController;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -18,6 +20,8 @@ public class Main {
         ProdutoController.registrar(server);
         UsuarioController.registrar(server);
         EnderecoController.registrar(server);
+        CepController.registrar(server);
+        CompraController.registrar(server);
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.start();
 
