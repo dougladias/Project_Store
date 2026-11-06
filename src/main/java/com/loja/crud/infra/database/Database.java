@@ -1,5 +1,6 @@
 package com.loja.crud.infra.database;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -13,9 +14,20 @@ public class Database {
     private final String senha;
 
     public Database() {
-        this.url = configuracao("DB_URL", "jdbc:mysql://localhost:3306/loja");
-        this.usuario = configuracao("DB_USER", "root");
-        this.senha = configuracao("DB_PASSWORD", "");
+        String valorUrl = configuracao("DB_URL", "jdbc:mysql://localhost:3306/loja");
+
+        if (valorUrl.startsWith("mysql://")) {
+            URI uri = URI.create(valorUrl);
+            String[] credenciais = uri.getUserInfo() != null ? uri.getUserInfo().split(":", 2) : new String[0];
+
+            this.url = "jdbc:mysql://" + uri.getHost() + ":" + uri.getPort() + uri.getPath();
+            this.usuario = credenciais.length > 0 ? credenciais[0] : configuracao("DB_USER", "root");
+            this.senha = credenciais.length > 1 ? credenciais[1] : configuracao("DB_PASSWORD", "");
+        } else {
+            this.url = valorUrl;
+            this.usuario = configuracao("DB_USER", "root");
+            this.senha = configuracao("DB_PASSWORD", "");
+        }
     }
 
     public static QueryBuilder query(String from) {
